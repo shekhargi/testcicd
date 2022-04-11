@@ -1,0 +1,36 @@
+version: 0.2
+env:
+  parameter-store:
+    TEST_ENV_VAR: /TEST/ENV/VAR
+    username: /user/name
+    password: /pass/word
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - echo ${TEST_ENV_VAR} 
+      - aws --version
+      - pip install --upgrade awscli==1.18.17
+      - docker login --username $username --password $password
+      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 194719759289.dkr.ecr.ap-south-1.amazonaws.com
+      - REPOSITORY_URI=194719759289.dkr.ecr.ap-south-1.amazonaws.com/testimage-tele
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
+      
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t $REPOSITORY_URI:latest --build-arg TEST_ENV_VAR=${TEST_ENV_VAR} .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:latest
+      
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker images...
+      - docker push $REPOSITORY_URI:latest
+      - echo Writing image definitions file...
+      - printf '[{"name":"hello-world","imageUri":"%s"}]' $REPOSITORY_URI:latest > imagedefinitions.json
+      
+artifacts:
+    files: imagedefinitions.json

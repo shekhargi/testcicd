@@ -1,0 +1,8 @@
+src/
+openapi/
+database/
+gradle/
+bin/
+.settings/
+.gradle/
+.github/

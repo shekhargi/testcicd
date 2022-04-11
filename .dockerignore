@@ -1,0 +1,6 @@
+.env
+.env.staging
+start_server.sh
+.elasticbeanstalk/*
+.git
+.gitignore
